@@ -9,3 +9,23 @@ h1 {
 #limit {
   width: 30px;
 }
+
+/* the tabs at the top */
+ul { /* the box around the tabs */
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	background-color: #28b487;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
+li {
+	float: left;
+}
+li a { /* the words */
+	display: inline-block;
+	color: white;
+	text-align: center;
+	padding: 14px 16px;
+	text-decoration: none;
+}

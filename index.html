@@ -7,8 +7,12 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
+      <ul>
+        <li><a href="index.html">Statistics</a></li>
+        <li><a href="whatsPlaying.html">What's Playing</a></li>
+        <li><a href="playlistMaker.html">Playlist Maker</a></li>
+    </ul>
       <h1><span id="displayName"></span>'s Spotify stats</h1>
-
       <div id="inputs">
         Type:
         <select name="type" id="type">
@@ -32,7 +36,7 @@
       </div>
 
       <div id="results">
-        <div id="stats"></div><br>
+        <div id="stats"></div>
         <button id="showMore" hidden="true">Show More</button>
         <button id="makePlaylist" hidden="true">Make Playlist</button>
         <div id="moreResults" hidden="true"></div>
