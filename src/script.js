@@ -5,6 +5,7 @@ const code = params.get("code");
 let token;
 let userID;
 let songURIs = [];
+let songIDs = [];
 
 if (!code) {
     redirectToAuthCodeFlow(clientId);
@@ -16,6 +17,7 @@ if (!code) {
 
 document.getElementById("getStats").addEventListener("click", getStats, false);
 document.getElementById("makePlaylist").addEventListener("click", makePlaylist, false);
+document.getElementById("showMore").addEventListener("click", showMore, false);
 
 export async function redirectToAuthCodeFlow(clientId) {
     const verifier = generateCodeVerifier(128);
@@ -70,7 +72,6 @@ export async function getAccessToken(clientId, code) {
     });
 
     const { access_token } = await result.json();
-    token = access_token;
     return access_token;
 }
 
@@ -90,6 +91,41 @@ async function fetchStats(token, type, range, limit) {
     return await result.json();
 }
 
+async function createPlaylist(token, userID, name, description, pubOrPriv) {
+    const result = await fetch(`https://api.spotify.com/v1/users/${userID}/playlists`, {
+        method: "POST", 
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({
+            "name": name,
+            "description": description,
+            "public": pubOrPriv
+        })
+    });
+
+    return await result.json();
+}
+
+async function addToPlaylist(token, playlistID, songURIs, position) {
+    const result = await fetch(`https://api.spotify.com/v1/playlists/${playlistID}/tracks`, {
+        method: "POST", 
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+            "uris": songURIs,
+            "position": position
+        })
+    });
+
+    return await result.json()
+}
+
+async function getTrackFeatures(token, trackID) {
+    const result = await fetch(`https://api.spotify.com/v1/audio-features/${trackID}`, {
+        method: "GET", headers: { Authorization: `Bearer ${token}` }
+    });
+
+    return await result.json();
+}
+
 function setProfile(profile) {
     document.getElementById("displayName").innerText = profile.display_name;
     userID = profile.id;
@@ -99,7 +135,12 @@ function setProfile(profile) {
  * Called when user clicks "get stats" button and returns stats based of the provided inputs
  */
 async function getStats() {
+    // reset page
     document.getElementById("stats").innerHTML = "";
+    document.getElementById("moreResults").innerHTML = "";
+    document.getElementById("moreResults").hidden = true;
+    document.getElementById("showMore").innerText = "Show More";
+    
     let type = document.getElementById("type").value;
     let range = document.getElementById("range").value;
     let limit = document.getElementById("limit").value || 20;
@@ -114,13 +155,16 @@ async function getStats() {
             if (type === "tracks") document.getElementById("stats").innerHTML += ` - ${item.album.artists[0].name}`;
             if (document.getElementById("sort").value === "worldPop") document.getElementById("stats").innerHTML += ` - popularity: ${item.popularity}`
             songURIs[i] = item.uri;
+            songIDs[i] = item.id;
             i++;
         }
 
         if (type === "tracks") {
             document.getElementById("makePlaylist").hidden = false;
+            document.getElementById("showMore").hidden = false;
         } else {
             document.getElementById("makePlaylist").hidden = true;
+            document.getElementById("showMore").hidden = false;
         }
     } else {
         document.getElementById("stats").innerHTML = "Limit needs to be between 1 and 50 inclusive."
@@ -136,27 +180,33 @@ async function makePlaylist() {
     let limit = document.getElementById("limit").value || 20;
 
     try {
-        const playlist = await fetch(`https://api.spotify.com/v1/users/${userID}/playlists`, {
-            method: "POST", 
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-            body: JSON.stringify({
-                "name": `Top ${limit} ${type} (${range.replace("_", " ")})`,
-                "description": "New Playlist Description",
-                "public": true
-            })
-        });
-
-        let playlistResponse = await playlist.json();
-
-        const songsAdded = await fetch(`https://api.spotify.com/v1/playlists/${playlistResponse.id}/tracks`, {
-            method: "POST", 
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-                "uris": songURIs,
-                "position": 0
-            })
-        });
+        const playlist = await createPlaylist(token, userID, `Top ${limit} ${type} (${range.replace("_", " ")})`, "New Playlist Description", true);
+        const songsAdded = await addToPlaylist(token, playlist.id, songURIs, 0); 
     } catch (error) {
         console.log(error)
+    }
+}
+
+async function showMore() {
+    if (document.getElementById("showMore").innerText === "Show More") {
+        document.getElementById("showMore").innerText = "Show Less";
+        let acousticness = 0, danceability = 0, energy = 0, tempo = 0, valence = 0;
+        let limit = document.getElementById("stats").innerText.split(" ")[1];
+
+        for (let id of songIDs) {
+            const songStats = await getTrackFeatures(token, id);
+            acousticness += songStats.acousticness, danceability += songStats.danceability, energy += songStats.energy, tempo += songStats.tempo, valence += songStats.valence;
+        }
+
+        document.getElementById("moreResults").innerHTML = 
+                `Acousticness: ${Math.round(acousticness/limit*100)}%<br>
+                Danceability: ${Math.round(danceability/limit*100)}%<br>
+                Energy: ${Math.round(energy/limit*100)}%<br>
+                Tempo: ${Math.round(tempo/limit)} bpm<br>
+                Valence: ${Math.round(valence/limit*100)}%<br>`
+        document.getElementById("moreResults").hidden = false;
+    } else {
+        document.getElementById("showMore").innerText = "Show More";
+        document.getElementById("moreResults").hidden = true;
     }
 }
