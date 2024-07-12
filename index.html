@@ -4,20 +4,33 @@
         <meta charset="utf-8">
         <title>My Music</title>
         <script src="src/script.js" type="module"></script>
+        <link rel="stylesheet" href="style.css">
     </head>
     <body>
-      <h1>Display your Spotify profile data</h1>
+      <h1>Display your Spotify stats</h1>
 
       <section id="profile">
-      <h2>Logged in as <span id="displayName"></span></h2>
-      <span id="avatar"></span>
-      <ul>
-          <li>User ID: <span id="id"></span></li>
-          <li>Email: <span id="email"></span></li>
-          <li>Spotify URI: <a id="uri" href="#"></a></li>
-          <li>Link: <a id="url" href="#"></a></li>
-          <li>Profile Image: <span id="imgUrl"></span></li>
-      </ul>
-      </section>      
+        <h2>Logged in as <span id="displayName"></span></h2>
+      </section><br><br>
+      <div id="inputs">
+        Type:
+        <select name="type" id="type">
+          <option value="artists">Artists</option>
+          <option value="tracks">Tracks</option>
+        </select><br><br>
+        Time Range:
+        <select name="range" id="range">
+          <option value="short_term">Short Term</option>
+          <option value="medium_term">Medium Term</option>
+          <option value="long_term">Long Term</option>
+        </select><br><br>
+        Limit:
+        <input type="text" id="limit" name="limit" placeholder="Limit"><br><br>
+        <button id="getStats">Get Stats</button>
+      </div>
+
+      <section id="stats">
+        
+      </section>
     </body>
 </html>
