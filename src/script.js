@@ -102,15 +102,17 @@ async function getStats() {
     document.getElementById("stats").innerHTML = "";
     let type = document.getElementById("type").value;
     let range = document.getElementById("range").value;
-    let limit = document.getElementById("limit").value;
+    let limit = document.getElementById("limit").value || 20;
     
-    if ((limit <= 50 && limit > 0) || limit === "") { 
+    if (limit <= 50 && limit > 0) { 
         const stats = await fetchStats(token, type, range, limit);
         document.getElementById("stats").innerHTML += `Top ${limit} ${type} (${range.replace("_", " ")})`;
         let i = 0;
+        if (document.getElementById("sort").value === "worldPop") stats.items = stats.items.sort(function(a, b) {return b.popularity - a.popularity});
         for (let item of stats.items) {
             document.getElementById("stats").innerHTML += `<br>\t${i + 1}: ${item.name}`;
             if (type === "tracks") document.getElementById("stats").innerHTML += ` - ${item.album.artists[0].name}`;
+            if (document.getElementById("sort").value === "worldPop") document.getElementById("stats").innerHTML += ` - popularity: ${item.popularity}`
             songURIs[i] = item.uri;
             i++;
         }
